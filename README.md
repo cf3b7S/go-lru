@@ -1,5 +1,5 @@
 # go-lru
-golang lru cache with thread safe.
+golang fast concurrent lru cache with thread safe.
 
 ### Installation
 
