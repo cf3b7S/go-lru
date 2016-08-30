@@ -138,10 +138,10 @@ func (c *LRU) Update(key string, cb Callback) (entry *Entry, found bool) {
 	now, exp := genExp(c.TTL)
 	shard := c.getShard(key)
 	shard.Lock()
+	defer shard.Unlock()
 	if entry, found = c.getEntry(shard, key, now, exp); found {
 		cb(entry)
 	}
-	shard.Unlock()
 	return
 }
 
