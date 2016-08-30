@@ -83,6 +83,13 @@ func TestTTL(t *testing.T) {
 	if _, ok := c.Get("key"); ok {
 		t.Fatal("expiration not work")
 	}
+
+	c.SetWithTTL("key1", 2, NoExpiration)
+	time.Sleep(100 * time.Millisecond)
+	if _, ok := c.Get("key1"); !ok {
+		t.Fatal("expiration not work")
+	}
+
 }
 
 func TestFlush(t *testing.T) {

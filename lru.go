@@ -74,7 +74,7 @@ func (c *LRU) getEntry(shard *lruShard, key string, now time.Time, exp *time.Tim
 		return
 	}
 	entry = el.Value.(*Entry)
-	if c.TTL != NoExpiration && entry.Expiration.Before(now) {
+	if entry.Expiration != nil && entry.Expiration.Before(now) {
 		c.remove(shard, el)
 		return nil, false
 	}
@@ -88,7 +88,7 @@ func (c *LRU) Set(key string, value interface{}) {
 	c.SetWithTTL(key, value, c.TTL)
 }
 
-// Set insert key value pair into the cache with expiration. If key exist and not expired, the value will be reset, otherwise new key will be added.
+// SetWithTTL insert key value pair into the cache with expiration. If key exist and not expired, the value will be reset, otherwise new key will be added.
 func (c *LRU) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 	now, exp := genExp(ttl)
 	shard := c.getShard(key)
