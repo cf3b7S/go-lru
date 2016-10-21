@@ -78,6 +78,7 @@ func (c *LRU) getEntry(shard *lruShard, key string, now time.Time, exp *time.Tim
 		c.remove(shard, el)
 		return nil, false
 	}
+	// update expiration
 	entry.Expiration = exp
 	shard.offer(el)
 	return
@@ -110,6 +111,34 @@ func (c *LRU) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 	shard.Unlock()
 }
 
+// SetOrUpdate insert key value pair into the cache with. If key already exist, callback will be executed as update.
+func (c *LRU) SetOrUpdate(key string, value interface{}, cb Callback) bool {
+	return c.SetOrUpdateWithTTL(key, value, cb, c.TTL)
+}
+
+func (c *LRU) SetOrUpdateWithTTL(key string, value interface{}, cb Callback, ttl time.Duration) (found bool) {
+	now, exp := genExp(c.TTL)
+	shard := c.getShard(key)
+	shard.Lock()
+	entry, found := c.getEntry(shard, key, now, exp)
+	if found {
+		cb(entry)
+	} else {
+		entry := c.entryPool.Get().(*Entry)
+		entry.Key = key
+		entry.Value = value
+		if ttl != NoExpiration {
+			entry.Expiration = exp
+		}
+		shard.add(entry)
+		if shard.len() > c.eps {
+			c.remove(shard, shard.oldest())
+		}
+	}
+	shard.Unlock()
+	return
+}
+
 // Get return the value corresponding to key and if the key was founded. If key is expired, found will be false.
 func (c *LRU) Get(key string) (value interface{}, found bool) {
 	now, exp := genExp(c.TTL)
@@ -139,7 +168,8 @@ func (c *LRU) Update(key string, cb Callback) (entry *Entry, found bool) {
 	shard := c.getShard(key)
 	shard.Lock()
 	defer shard.Unlock()
-	if entry, found = c.getEntry(shard, key, now, exp); found {
+	entry, found = c.getEntry(shard, key, now, exp)
+	if found {
 		cb(entry)
 	}
 	return

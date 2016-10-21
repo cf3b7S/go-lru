@@ -74,6 +74,20 @@ func TestUpdate(t *testing.T) {
 	if e, ok := c.Update("key", Inc); !ok || e.Value.(int) != 2 {
 		t.Fatal("it should be 2")
 	}
+	if found := c.SetOrUpdate("newKey", 3, Inc); found {
+		t.Fatal("newKey should not exist")
+	}
+	if value, found := c.Get("newKey"); !found || value != 3 {
+		t.Errorf("found: %v, value: %d", found, value)
+		t.Fatal("newKey should exist, value should be 3")
+	}
+	if found := c.SetOrUpdate("newKey", 3, Inc); !found {
+		t.Fatal("newKey should exist")
+	}
+	if value, found := c.Get("newKey"); !found || value != 4 {
+		t.Errorf("found: %v, value: %d", found, value)
+		t.Fatal("newKey should exist, value should be 4")
+	}
 }
 
 func TestTTL(t *testing.T) {
