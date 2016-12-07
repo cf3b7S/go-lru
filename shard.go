@@ -1,9 +1,10 @@
 package lru
 
 import (
-	"list"
-	"spinlock"
 	"sync"
+
+	"go-lru/list"
+	"go-lru/spinlock"
 )
 
 type lruShard struct {

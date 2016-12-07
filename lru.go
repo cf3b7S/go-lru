@@ -6,10 +6,11 @@ import (
 	"hash"
 	"hash/fnv"
 	"io"
-	"list"
 	"os"
 	"sync"
 	"time"
+
+	"go-lru/list"
 )
 
 const NoExpiration time.Duration = 0
