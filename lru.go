@@ -17,6 +17,7 @@ const NoExpiration time.Duration = 0
 const SHARD_SIZE_DEFAULT int = 64
 
 type Callback func(entry *Entry)
+type CreateFn func(key string) interface{}
 
 type LRU struct {
 	TTL       time.Duration
@@ -118,7 +119,7 @@ func (c *LRU) SetOrUpdate(key string, value interface{}, cb Callback) bool {
 }
 
 func (c *LRU) SetOrUpdateWithTTL(key string, value interface{}, cb Callback, ttl time.Duration) (found bool) {
-	now, exp := genExp(c.TTL)
+	now, exp := genExp(ttl)
 	shard := c.getShard(key)
 	shard.Lock()
 	entry, found := c.getEntry(shard, key, now, exp)
@@ -128,6 +129,33 @@ func (c *LRU) SetOrUpdateWithTTL(key string, value interface{}, cb Callback, ttl
 		entry := c.entryPool.Get().(*Entry)
 		entry.Key = key
 		entry.Value = value
+		if ttl != NoExpiration {
+			entry.Expiration = exp
+		}
+		shard.add(entry)
+		if shard.len() > c.eps {
+			c.remove(shard, shard.oldest())
+		}
+	}
+	shard.Unlock()
+	return
+}
+
+func (c *LRU) CreateOrUpdate(key string, createFn CreateFn, cb Callback) bool {
+	return c.CreateOrUpdateWithTTL(key, createFn, cb, c.TTL)
+}
+
+func (c *LRU) CreateOrUpdateWithTTL(key string, createFn CreateFn, cb Callback, ttl time.Duration) (found bool) {
+	now, exp := genExp(ttl)
+	shard := c.getShard(key)
+	shard.Lock()
+	entry, found := c.getEntry(shard, key, now, exp)
+	if found {
+		cb(entry)
+	} else {
+		entry := c.entryPool.Get().(*Entry)
+		entry.Key = key
+		entry.Value = createFn(key)
 		if ttl != NoExpiration {
 			entry.Expiration = exp
 		}

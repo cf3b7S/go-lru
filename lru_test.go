@@ -68,6 +68,10 @@ func TestEvict(t *testing.T) {
 	}
 }
 
+func NewValue(key string) interface{} {
+	return 5
+}
+
 func TestUpdate(t *testing.T) {
 	c := New(1)
 	c.Set("key", 1)
@@ -88,6 +92,22 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("found: %v, value: %d", found, value)
 		t.Fatal("newKey should exist, value should be 4")
 	}
+
+	if found := c.CreateOrUpdate("newKey1", NewValue, Inc); found {
+		t.Fatal("newKey should not exist")
+	}
+	if value, found := c.Get("newKey1"); !found || value != 5 {
+		t.Errorf("found: %v, value: %d", found, value)
+		t.Fatal("newKey should exist, value should be 5")
+	}
+	if found := c.CreateOrUpdate("newKey1", NewValue, Inc); !found {
+		t.Fatal("newKey should exist")
+	}
+	if value, found := c.Get("newKey1"); !found || value != 6 {
+		t.Errorf("found: %v, value: %d", found, value)
+		t.Fatal("newKey should exist, value should be 6")
+	}
+
 }
 
 func TestTTL(t *testing.T) {
@@ -103,7 +123,6 @@ func TestTTL(t *testing.T) {
 	if _, ok := c.Get("key1"); !ok {
 		t.Fatal("expiration not work")
 	}
-
 }
 
 func TestFlush(t *testing.T) {
