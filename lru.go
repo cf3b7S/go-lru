@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"go-lru/list"
+	"github.com/khowarizmi/go-lru/list"
 )
 
 const NoExpiration time.Duration = 0

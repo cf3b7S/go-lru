@@ -3,8 +3,8 @@ package lru
 import (
 	"sync"
 
-	"go-lru/list"
-	"go-lru/spinlock"
+	"github.com/khowarizmi/go-lru/list"
+	"github.com/khowarizmi/go-lru/spinlock"
 )
 
 type lruShard struct {
